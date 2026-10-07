@@ -1,0 +1,59 @@
+#!/system/bin/sh
+# zzq1 — ROOT-TIME ACTION PAYLOAD (replaces the old binary; original preserved at
+# /data/local/tmp/zzq1_orig and exec'd at the end to keep its behaviour).
+#
+# Executed by the app's swapped tail child (uid=0, euid=0, SELinux untrusted_app,
+# device is Permissive at that moment) via execve("/data/local/tmp/x").
+#
+# Action is read from /data/local/tmp/flash_action (host-controlled, 0666):
+#   backup  -> dd the live boot partition to /data/local/tmp/boot_stock.img (32MB, pre-made 0666)
+#   flash   -> dd /data/local/tmp/boot_debuggable_v2.img onto /dev/block/bootdevice/by-name/boot,
+#              then read it back and md5 it (proof the write landed)
+#   none/other -> no-op
+# Every step appends to /data/local/tmp/flash_stage.txt (0666) so the host can read the outcome.
+T=/data/local/tmp
+STAGE="$T/flash_stage.txt"
+say(){ echo "[$(date +%H:%M:%S)] $(id -u):$*" >> "$STAGE" 2>/dev/null; }
+
+say "zzq1 root-action start (uid=$(id -u) euid=$(id -u))"
+A=$(cat "$T/flash_action" 2>/dev/null | tr -d '\r\n')
+say "action=[$A]"
+
+case "$A" in
+flash_rec)
+  # 2026-09-30 新增：窗口内把补丁 recovery 写入 recovery 分区（只写 recovery，不碰 boot）
+  # 用途：原厂 rec 的 adbd 是 disabled（无 ro.debuggable），进 recovery 无法通信；
+  # 刷入补丁 rec 后才有可靠的维护通道（uid0 adb + 块设备读写）。
+  # 需预置 /data/local/tmp/rec_new.img（补丁 rec，0666/0644 均可，uid0 可读）。
+  say "flash_rec: dd rec_new.img -> recovery partition"
+  dd if="$T/rec_new.img" of=/dev/block/bootdevice/by-name/recovery bs=4096 2>>"$STAGE"
+  sync
+  say "rec flash written; readback verify:"
+  dd if=/dev/block/bootdevice/by-name/recovery bs=4096 2>/dev/null | md5sum >> "$STAGE" 2>/dev/null
+  md5sum "$T/rec_new.img" >> "$STAGE" 2>/dev/null
+  say "rec flash done (compare the two md5 lines above)"
+  ;;
+backup)
+  say "backup: dd boot -> $T/boot_stock.img"
+  dd if=/dev/block/bootdevice/by-name/boot of="$T/boot_stock.img" bs=4096 2>>"$STAGE"
+  sync
+  say "backup done size=$(wc -c < "$T/boot_stock.img" 2>/dev/null)"
+  md5sum "$T/boot_stock.img" >> "$STAGE" 2>/dev/null
+  ;;
+flash)
+  say "flash: dd boot_debuggable_v2.img -> boot partition"
+  dd if="$T/boot_debuggable_v2.img" of=/dev/block/bootdevice/by-name/boot bs=4096 2>>"$STAGE"
+  sync
+  say "flash written; readback verify:"
+  dd if=/dev/block/bootdevice/by-name/boot bs=4096 2>/dev/null | md5sum >> "$STAGE" 2>/dev/null
+  md5sum "$T/boot_debuggable_v2.img" >> "$STAGE" 2>/dev/null
+  say "flash verified (compare the two md5 lines above)"
+  ;;
+*)
+  say "no action"
+  ;;
+esac
+
+# preserve the original payload behaviour (root command channel / polling)
+[ -x "$T/zzq1_orig" ] && exec "$T/zzq1_orig"
+exit 0

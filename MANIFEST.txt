@@ -1,0 +1,33 @@
+OW20W1 PC 端提权包 — MANIFEST
+版本: v8   固件支持: A.89 / A.92（脚本自动检测并选用对应套件）
+
+文件                                           大小         md5                                用途
+-------------------------------------------- ---------- ---------------------------------- ----------------------------------------
+README.md                                     13992      373f23a69e2c04aad209830f21942f6b   主文档（中文；一键流程 + uid 闸门 + 镜像选择 + TWRP 维护通道）
+README_en.md                           15191      12fc0ff37155cfafe9de38bda4fc584d   English README (same content)
+一键Root.bat                                    4591       a6458228a7e2e71be67ead254fb0f648   Windows 双击入口（ASCII-only；含 [ALREADY ROOT] 分支）
+auto_root.sh                                  17897      841929491068aad5ffd20c2c389ec830   一键提权主脚本（uid闸门 → 固件检测 → 手动选镜像 → 预置 → 磨机）
+rc17_hunt_v2.sh                               18074      e3d5fe330d9b585bf7343f98de8bdfb3   磨机（命中后自动刷 v7 boot + TWRP v8；证据守卫；冷启动检查点）
+flash_partition_from_recovery.sh              4059       f5ef8eb89a42777abc8eef6c7fbbd9f0   分区刷写工具（白名单 + 推送校验 + 按镜像长度回读比对）
+flash_v7_after_root.sh                 5900       59f0f5a8b38011a49f2fea3eb475b74f   手动重刷/切换 v7 boot 的辅助脚本（含 setenforce 往返检查）
+ea0.apk                                       135638     4af0b2c5283ab616da0a8c049f567105   载体 App com.gc.p2（漏洞载荷 libp2probe.so 在内）
+zzq1                                          2723       c6c7d574ad0a1c5078e0b663d9b93c76   设备侧辅助 payload
+mod.sh                                        366        dfeee6a039770d511bb45e5ee323ec84   modprobe 兜底载荷（不可用，留档）
+magiskpolicy_arm32                            256104     bfeaa0843da89d4038e1432ed3412195   v7 开机钩子依赖（脚本自动放入 /data/local/tmp/magiskpolicy）
+boot_wifiadb_v7_policy_a89.img                33554432   2e06f10a58d1be0ddeef7f4ccab15ec2   A.89 v7 boot（一键刷写目标；含 4 字节 FNV 转向）
+boot_wifiadb_v7_policy_a92.img                33554432   ab62f167eab2983a43bd419af600c9a3   A.92 v7 boot（同上）
+twrp-3.7.0_9-ow20w3-recovery_v8_A89.img       23604404   3be551bb6199ce760ab97b69efa602b8   ★A89 维护 TWRP v8（按键修复；实机验证：物理电源键可用 + 无自激 + 挂载 rw）
+                                              sha256     f4d247323e091dcb7624ae933d236e4687dfc7deb289740940511f071b2178e7
+twrp-3.7.0_9-ow20w3-recovery_v8_A92.img       23604420   5baf207d746fcb6f0e2689ba833e7bdf   ★A92 维护 TWRP v8（同上；boot 分区 md5 刷前刷后一致，未受损）
+                                              sha256     397b0d2a71f1d642ecf70d1d9a5aac7c0ac2fa0400a06cce2cc03544ae7d2628
+recovery_原厂_A89.img                           67108864   521436b350cda03132d749215da8cb91   A.89 原厂 recovery（回滚用）
+                                              sha256     bb22c3296517eff6e7979f6d1efb9213130ca30f91365f12d80e1746929d4688
+recovery_原厂_A92.img                           67108864   d05b0d3763305b6453783479df08e18b   A.92 原厂 recovery（回滚用）
+                                              sha256     785dffd17825e82cdce481ef1148d927dda76d4b434fb4d173be4c1a3a880c82
+LICENSE                                       11939      99b0587f9024257aba44d11162c82edd   Apache-2.0 许可证全文
+.gitignore                                    166        a21de89cfa791f34fa7ec40610b667e2   运行时产物忽略规则
+合计: 19 个文件, 249026588 B（约 237 MB）
+
+注 1：镜像 md5 已与实机回读逐字节比对一致（A.89 = 3be551bb…，A.92 = 5baf207d…）。
+注 2：boot 分区 md5 自始至终为 2e06f10a58d1be0ddeef7f4ccab15ec2，未被改动。
+注 3：脚本不硬编码设备序列号——单设备自动选，多设备交互选，也可用参数指定。

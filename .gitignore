@@ -1,0 +1,11 @@
+old_logs/
+evidence/
+rc17_hunt.pid
+rc17_capture.pid
+auto_root_hunt.log
+rc17_log.txt
+rc17_launch.log
+rc17_heartbeat.txt
+rc17_singleton.log
+rc_live.txt
+validation_*.log
